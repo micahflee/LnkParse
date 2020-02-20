@@ -85,13 +85,22 @@ class lnk_file(object):
 
 	def define_common(self):
 		try:
-			out = ""
-			if self.linkFlag['HasRelativePath']:
-					out += self.data['relativePath']
-			if self.linkFlag['HasArguments']:
-					out += " " + self.data['commandLineArguments']
+			if type(self.data['relativePath']) is str:
+				out = ""
+				if self.linkFlag['HasRelativePath']:
+						out += self.data['relativePath']
+				if self.linkFlag['HasArguments']:
+						out += " " + self.data['commandLineArguments']
 
-			self.lnk_command = out
+				self.lnk_command = out
+			else:
+				out = b""
+				if self.linkFlag['HasRelativePath']:
+						out += self.data['relativePath']
+				if self.linkFlag['HasArguments']:
+						out += b" " + self.data['commandLineArguments']
+
+				self.lnk_command = out
 		except Exception as e:
 			if self.debug:
 				print("Exception define_common: %s" % e)
@@ -99,11 +108,18 @@ class lnk_file(object):
 
 	def get_command(self):
 		try:
-			out = ""
-			if self.linkFlag['HasRelativePath']:
-					out += self.data['relativePath']
-			if self.linkFlag['HasArguments']:
-					out += " " + self.data['commandLineArguments']
+			if type(self.data['relativePath']) is str:
+				out = ""
+				if self.linkFlag['HasRelativePath']:
+						out += self.data['relativePath']
+				if self.linkFlag['HasArguments']:
+						out += " " + self.data['commandLineArguments']
+			else:
+				out = b""
+				if self.linkFlag['HasRelativePath']:
+						out += self.data['relativePath']
+				if self.linkFlag['HasArguments']:
+						out += b" " + self.data['commandLineArguments']
 
 			return out
 		except Exception as e:
@@ -159,7 +175,12 @@ class lnk_file(object):
 			]
 
 	def clean_line(self, rstring):
-		return ''.join(i for i in rstring if ord(i)<128 and ord(i)>20)
+		if type(rstring) is str:
+			rstring = rstring.replace('\x00', '')
+			return ''.join(i for i in rstring if ord(i)<128 and ord(i)>20)
+		else:
+			rstring = rstring.replace(b'\x00', b'')
+			return b''.join(chr(i).encode() for i in rstring if i<128 and i>20)
 
 
 
@@ -439,27 +460,27 @@ class lnk_file(object):
 
 				if self.linkFlag['HasName']:
 					desc_size = struct.unpack('<H', self.indata[index: index + 2])[0] * u_mult
-					self.data['description'] = self.clean_line(self.indata[index + 2: index + 2 + desc_size].replace("\x00",''))
+					self.data['description'] = self.clean_line(self.indata[index + 2: index + 2 + desc_size])
 					index += (2 + desc_size)
 
 				if self.linkFlag['HasRelativePath']:
 					rel_size = struct.unpack('<H', self.indata[index: index + 2])[0] * u_mult
-					self.data['relativePath'] = self.clean_line(self.indata[index + 2: index + 2 + rel_size].replace("\x00",''))
+					self.data['relativePath'] = self.clean_line(self.indata[index + 2: index + 2 + rel_size])
 					index += (2 + rel_size)
 
 				if self.linkFlag['HasWorkingDir']:
 					wor_size = struct.unpack('<H', self.indata[index: index + 2])[0] * u_mult
-					self.data['workingDirectory'] = self.clean_line(self.indata[index + 2: index + 2 + wor_size].replace("\x00",''))
+					self.data['workingDirectory'] = self.clean_line(self.indata[index + 2: index + 2 + wor_size])
 					index += (2 + wor_size)
 
 				if self.linkFlag['HasArguments']:
 					cli_size = struct.unpack('<H', self.indata[index: index + 2])[0] * u_mult
-					self.data['commandLineArguments'] = self.clean_line(self.indata[index + 2: index + 2 + cli_size].replace("\x00",''))
+					self.data['commandLineArguments'] = self.clean_line(self.indata[index + 2: index + 2 + cli_size])
 					index += (2 + cli_size)
 
 				if self.linkFlag['HasIconLocation']:
 					icon_size = struct.unpack('<H', self.indata[index: index + 2])[0] * u_mult
-					self.data['iconLocation'] = self.indata[index + 2: index + 2 + icon_size].replace("\x00",'')
+					self.data['iconLocation'] = self.indata[index + 2: index + 2 + icon_size]
 					index += (2 + icon_size)
 
 			except Exception as e:
