@@ -5,6 +5,8 @@ import sys
 import json
 import struct
 import datetime
+import binascii
+
 
 class lnk_file(object):
 	def __init__(self, fhandle=False, indata=False, debug=False):
@@ -169,7 +171,7 @@ class lnk_file(object):
 
 			lnk_header = self.indata[:self.lnk_header["header_size"]]
 
-			self.lnk_header['guid'] = lnk_header[4:20].encode('hex')
+			self.lnk_header['guid'] = binascii.hexlify(lnk_header[4:20])
 
 			self.lnk_header['linkFlags'] = struct.unpack('<i', lnk_header[20:24])[0]
 			self.lnk_header['fileFlags'] = struct.unpack('<i', lnk_header[24:28])[0]
@@ -179,11 +181,11 @@ class lnk_file(object):
 			self.lnk_header['modified_time'] = struct.unpack('<q', lnk_header[44:52])[0]
 
 			self.lnk_header['file_size'] = struct.unpack('<i', lnk_header[52:56])[0]
-			self.lnk_header['rfile_size'] = lnk_header[52:56].encode('hex')
+			self.lnk_header['rfile_size'] = binascii.hexlify(lnk_header[52:56])
 
 			self.lnk_header['icon_index'] = struct.unpack('<I', lnk_header[56:60])[0]
 			try:
-				if struct.unpack('<i', lnk_header[60:64])[0] < (self.WINDOWSTYLES):
+				if struct.unpack('<i', lnk_header[60:64])[0] < len(self.WINDOWSTYLES):
 					self.lnk_header['windowstyle'] = self.WINDOWSTYLES[struct.unpack('<i', lnk_header[60:64])[0]]
 				else:
 					self.lnk_header['windowstyle'] = struct.unpack('<i', lnk_header[60:64])[0]
@@ -196,14 +198,14 @@ class lnk_file(object):
 				self.lnk_header['hotkey'] = "%s - %s {0x%s}" % (
 					self.HOTKEY_VALUES[ chr(struct.unpack('<B', lnk_header[65:66])[0]) ],
 					self.clean_line(chr(struct.unpack('<B', lnk_header[64:65])[0])),
-					lnk_header[64:66].encode('hex')
+					binascii.hexlify(lnk_header[64:66])
 					)
 
 				self.lnk_header['rhotkey'] = struct.unpack('<H', lnk_header[64:66])[0]
 			except Exception as e:
 				if self.debug:
 					print("Exception parsing HOTKEY part of header: %s" % e)
-					print(lnk_header[65:66].encode('hex'))
+					print(binascii.hexlify(lnk_header[65:66]))
 				self.lnk_header['hotkey'] = struct.unpack('<H', lnk_header[64:66])[0]
 
 			self.lnk_header['reserved0'] = struct.unpack('<H', lnk_header[66:68])[0]
@@ -315,7 +317,7 @@ class lnk_file(object):
 		while True:
 			tmp_item = {}
 			tmp_item['size'] = struct.unpack('<H', self.link_target_list[ index : index + 2])[0]
-			tmp_item['rsize'] = self.link_target_list[index : index + 2].encode('hex')
+			tmp_item['rsize'] = binascii.hexlify(self.link_target_list[index : index + 2])
 
 			self.items.append(tmp_item)
 			index += tmp_item['size']
@@ -496,10 +498,10 @@ class lnk_file(object):
 
 		self.extraBlocks['DISTRIBUTED_LINK_TRACKER_BLOCK']['machine_identifier'] = self.clean_line(self.indata[index + 16: index + 32])
 
-		self.extraBlocks['DISTRIBUTED_LINK_TRACKER_BLOCK']['droid_volume_identifier'] = self.indata[index + 32: index + 48].encode('hex')
-		self.extraBlocks['DISTRIBUTED_LINK_TRACKER_BLOCK']['droid_file_identifier'] = self.indata[index + 48: index + 64].encode('hex')
-		self.extraBlocks['DISTRIBUTED_LINK_TRACKER_BLOCK']['birth_droid_volume_identifier'] = self.indata[index + 64: index + 80 ].encode('hex')
-		self.extraBlocks['DISTRIBUTED_LINK_TRACKER_BLOCK']['birth_droid_file_identifier'] = self.indata[index + 80: index + 96 ].encode('hex')
+		self.extraBlocks['DISTRIBUTED_LINK_TRACKER_BLOCK']['droid_volume_identifier'] = binascii.hexlify(self.indata[index + 32: index + 48])
+		self.extraBlocks['DISTRIBUTED_LINK_TRACKER_BLOCK']['droid_file_identifier'] = binascii.hexlify(self.indata[index + 48: index + 64])
+		self.extraBlocks['DISTRIBUTED_LINK_TRACKER_BLOCK']['birth_droid_volume_identifier'] = binascii.hexlify(self.indata[index + 64: index + 80 ])
+		self.extraBlocks['DISTRIBUTED_LINK_TRACKER_BLOCK']['birth_droid_file_identifier'] = binascii.hexlify(self.indata[index + 80: index + 96 ])
 
 
 	def parse_codepage_block(self, index, size):
